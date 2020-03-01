@@ -1,11 +1,15 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"text/template"
+
+	"github.com/taniwhy/chat/trace"
 )
 
 type templateHandler struct {
@@ -20,17 +24,23 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			template.Must(template.ParseFiles(filepath.Join("templates",
 				t.filename)))
 	})
-
-	t.templ.Execute(w, nil)
+	t.templ.Execute(w, r)
 }
 
 func main() {
-	r := newRoom()
+	var addr = flag.String("addr", ":8080", "アプリケーションのアドレス")
+	flag.Parse()
+
+	r := NewRoom()
+	r.tracer = trace.NewTracer(os.Stdout)
+
 	http.Handle("/", &templateHandler{filename: "chat.html"})
 	http.Handle("/room", r)
 	// チャット開始
 	go r.run()
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+
+	log.Println("Webサーバーを開始します。ポート : ", *addr)
+	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
