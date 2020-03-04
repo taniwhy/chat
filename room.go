@@ -39,15 +39,14 @@ func (r *room) run() {
 			close(client.send)
 			r.tracer.Trace("クライアントが退室しました")
 		case msg := <-r.forword:
-			r.tracer.Trace("メッセージを受信しました: ", msg.Message)
+			r.tracer.Trace("メッセージを受信しました: ", string(msg.Message))
 			for client := range r.clients {
 				select {
 				case client.send <- msg:
 					r.tracer.Trace(" -- クライアントに送信されました")
 				default:
-					delete(r.clients, client)
-					close(client.send)
-					r.tracer.Trace(" -- 送信に失敗しました。クライアントをクリーンアップします")
+					client.send <- msg
+					r.tracer.Trace(" -- sent to client")
 				}
 			}
 		}

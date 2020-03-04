@@ -33,7 +33,7 @@
             alert("エラー:  WebSocket接続が行われていません。");
             return false;
           }
-          socket.send(msgBox.val());
+          socket.send(JSON.stringify({ Message: msgBox.val() }));
           msgBox.val("");
           return false;
         });
@@ -45,7 +45,14 @@
             alert("接続が終了しました。");
           };
           socket.onmessage = function(e) {
-            messages.append($("<li>").text(e.data));
+            console.log(e);
+            var msg = eval("(" + e.data + ")");
+            messages.append(
+              $("<li>").append(
+                $("<storong>").text(msg.Name + ": "),
+                $("<span>").text(msg.Message)
+              )
+            );
           };
         }
       });

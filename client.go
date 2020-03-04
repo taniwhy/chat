@@ -14,24 +14,26 @@ type client struct {
 }
 
 func (c *client) read() {
+	defer c.socket.Close()
 	for {
 		var msg *message
-		if err := c.socket.ReadJSON(&msg); err == nil {
-			msg.When = time.Now()
-			msg.Name = c.userData["name"].(string)
-			c.room.forword <- msg
-		} else {
-			break
+		err := c.socket.ReadJSON(&msg)
+		if err != nil {
+			return
 		}
+		msg.When = time.Now()
+		msg.Name = c.userData["name"].(string)
+		c.room.forword <- msg
 	}
-	c.socket.Close()
 }
 
 func (c *client) write() {
+	defer c.socket.Close()
 	for msg := range c.send {
-		if err := c.socket.WriteJSON(msg); err == nil {
-			break
+		err := c.socket.WriteJSON(msg)
+		if err != nil {
+			return
 		}
 	}
-	c.socket.Close()
+
 }
